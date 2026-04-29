@@ -50,6 +50,13 @@ module "iam_lambda" {
   tags = local.common_tags
 }
 
+resource "aws_ssm_parameter" "lambda_role_arn" {
+  name  = "/${var.environment}/${var.app_name}/iam/lambda-role-arn"
+  type  = "String"
+  value = module.iam_lambda.role_arn
+  tags  = local.common_tags
+}
+
 output "lambda_role_arn" {
   description = "ARN of the Lambda execution role"
   value       = module.iam_lambda.role_arn
