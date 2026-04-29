@@ -71,7 +71,7 @@ Crea el bucket S3 y la tabla DynamoDB que guardarán el estado remoto de Terrafo
 ```bash
 cd bootstrap
 terraform init
-terraform apply
+terraform apply -auto-approve
 ```
 
 Al finalizar, el output muestra el Account ID:
@@ -110,7 +110,7 @@ terraform {
 cd ../dev
 terraform init
 terraform plan     # revisar qué se va a crear
-terraform apply
+terraform apply  -auto-approve
 ```
 
 ### Paso 4 — Desplegar prod
@@ -155,7 +155,7 @@ terraform validate
 
 ## Recursos creados actualmente
 
-| Recurso | Nombre en dev | Nombre en prod |
-|---|---|---|
-| IAM Role | `ctv-lambda-role-dev` | `ctv-lambda-role-prod` |
+| Recurso    | Nombre en dev           | Nombre en prod           |
+| ---------- | ----------------------- | ------------------------ |
+| IAM Role   | `ctv-lambda-role-dev`   | `ctv-lambda-role-prod`   |
 | IAM Policy | `ctv-lambda-policy-dev` | `ctv-lambda-policy-prod` |
