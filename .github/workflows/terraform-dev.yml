@@ -5,14 +5,14 @@ on:
     branches:
       - develop
     paths:
-      - 'dev/**'
-      - 'modules/**'
+      - "dev/**"
+      - "modules/**"
   pull_request:
     branches:
       - develop
     paths:
-      - 'dev/**'
-      - 'modules/**'
+      - "dev/**"
+      - "modules/**"
 
 permissions:
   id-token: write
@@ -38,10 +38,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Validate secrets
+        run: |
+          echo "AWS_ROLE_ARN set: ${{ secrets.AWS_ROLE_ARN != '' }}"
+
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN_DEV }}
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Setup Terraform
@@ -113,7 +117,7 @@ jobs:
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN_DEV }}
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Setup Terraform

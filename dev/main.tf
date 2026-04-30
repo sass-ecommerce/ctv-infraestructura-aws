@@ -26,13 +26,7 @@ module "iam_lambda" {
           "dynamodb:GetItem",
           "dynamodb:BatchGetItem",
           "dynamodb:Query",
-          "dynamodb:Scan"
-        ]
-        Resource = "arn:aws:dynamodb:*:*:table/${var.app_name}-*-${var.environment}"
-      },
-      {
-        Effect = "Allow"
-        Action = [
+          "dynamodb:Scan",
           "dynamodb:PutItem",
           "dynamodb:UpdateItem",
           "dynamodb:DeleteItem",
@@ -50,11 +44,15 @@ module "iam_lambda" {
   tags = local.common_tags
 }
 
-resource "aws_ssm_parameter" "lambda_role_arn" {
-  name  = "/${var.environment}/${var.app_name}/iam/lambda-role-arn"
-  type  = "String"
-  value = module.iam_lambda.role_arn
-  tags  = local.common_tags
+module "secrets" {
+  source      = "../modules/secrets"
+  environment = var.environment
+  app_name    = var.app_name
+  tags        = local.common_tags
+
+  string_parameters = {
+    "iam/lambda-role-arn" = module.iam_lambda.role_arn
+  }
 }
 
 output "lambda_role_arn" {
