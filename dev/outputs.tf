@@ -8,3 +8,7 @@ output "ssm_parameter_names" {
   value       = module.secrets.parameter_names
 }
 
+output "dynamodb_tbl_users" {
+  description = "Name of the DynamoDB table for users"
+  value       = module.dynamodb_users.table_name
+}
