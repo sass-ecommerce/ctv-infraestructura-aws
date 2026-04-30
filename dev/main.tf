@@ -53,11 +53,22 @@ module "dynamodb_users" {
 }
 
 # ---- Cognito ----
+data "aws_lambda_function" "pre_token" {
+  function_name = "${var.app_name}-lambda-pre-token-${var.environment}"
+}
+
+data "aws_lambda_function" "post_confirmation" {
+  function_name = "${var.app_name}-lambda-user-post-confirmation-${var.environment}"
+}
+
 module "cognito" {
   source          = "../modules/cognito"
   name            = "${var.app_name}-user-pool-${var.environment}"
   app_client_name = "${var.app_name}-app-client-${var.environment}"
   tags            = local.common_tags
+
+  pre_token_generation_lambda_arn = data.aws_lambda_function.pre_token.arn
+  post_confirmation_lambda_arn    = data.aws_lambda_function.post_confirmation.arn
 }
 
 module "secrets" {
