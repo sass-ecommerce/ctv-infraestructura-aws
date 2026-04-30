@@ -48,7 +48,7 @@ module "iam_lambda" {
 module "dynamodb_users" {
   source     = "../modules/dynamodb"
   table_name = "${var.app_name}-tbl-users-${var.environment}"
-  hash_key   = "userId"
+  hash_key   = "id"
   tags       = local.common_tags
 }
 
