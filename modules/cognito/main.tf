@@ -23,6 +23,18 @@ resource "aws_cognito_user_pool" "this" {
     email_sending_account = "COGNITO_DEFAULT"
   }
 
+  schema {
+    name                = "id"
+    attribute_data_type = "String"
+    mutable             = true
+    required            = false
+
+    string_attribute_constraints {
+      min_length = 1
+      max_length = 36
+    }
+  }
+
   account_recovery_setting {
     recovery_mechanism {
       name     = "verified_email"
