@@ -67,9 +67,9 @@ module "secrets" {
   tags        = local.common_tags
 
   string_parameters = {
-    "iam/lambda-role-arn"      = module.iam_lambda.role_arn
-    "cognito/user-pool-id"     = module.cognito.user_pool_id
-    "cognito/app-client-id"    = module.cognito.client_id
+    "iam/lambda-role-arn"   = module.iam_lambda.role_arn
+    "cognito/user-pool-id"  = module.cognito.user_pool_id
+    "cognito/app-client-id" = module.cognito.client_id
   }
 }
 
