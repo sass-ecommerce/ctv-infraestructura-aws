@@ -55,7 +55,3 @@ module "secrets" {
   }
 }
 
-output "lambda_role_arn" {
-  description = "ARN of the Lambda execution role"
-  value       = module.iam_lambda.role_arn
-}
