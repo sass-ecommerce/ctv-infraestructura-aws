@@ -40,12 +40,12 @@ jobs:
 
       - name: Validate secrets
         run: |
-          echo "SERVERLESS_ACCESS_KEY set: ${{ secrets.AWS_ROLE_ARN_DEV != '' }}"
+          echo "AWS_ROLE_ARN set: ${{ secrets.AWS_ROLE_ARN != '' }}"
 
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN_DEV }}
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Setup Terraform
@@ -117,7 +117,7 @@ jobs:
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN_DEV }}
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Setup Terraform
