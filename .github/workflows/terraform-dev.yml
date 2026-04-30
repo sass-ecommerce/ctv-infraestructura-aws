@@ -40,7 +40,7 @@ jobs:
 
       - name: Validate secrets
         run: |
-          echo "SERVERLESS_ACCESS_KEY set: ${{ secrets.AWS_ROLE_ARN_DEV }}"
+          echo "SERVERLESS_ACCESS_KEY set: ${{ secrets.AWS_ROLE_ARN_DEV != '' }}"
 
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
