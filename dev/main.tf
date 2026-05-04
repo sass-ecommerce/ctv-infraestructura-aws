@@ -49,6 +49,7 @@ module "dynamodb_users" {
   source     = "../modules/dynamodb"
   table_name = "${var.app_name}-tbl-users-${var.environment}"
   hash_key   = "id"
+  range_key  = "sub"
   tags       = local.common_tags
 }
 
