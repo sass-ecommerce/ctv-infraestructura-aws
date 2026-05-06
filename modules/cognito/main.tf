@@ -34,6 +34,18 @@ resource "aws_cognito_user_pool" "this" {
       max_length = 36
     }
   }
+  
+  schema {
+    name                = "tenantId"
+    attribute_data_type = "String"
+    mutable             = true
+    required            = false
+
+    string_attribute_constraints {
+      min_length = 1
+      max_length = 36
+    }
+  }
 
   dynamic "lambda_config" {
     for_each = (var.pre_token_generation_lambda_arn != null || var.post_confirmation_lambda_arn != null) ? [1] : []
