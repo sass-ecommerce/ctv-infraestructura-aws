@@ -53,14 +53,14 @@ module "dynamodb_users" {
   tags       = local.common_tags
 }
 
-# ---- Cognito ----
-data "aws_lambda_function" "pre_token" {
-  function_name = "${var.app_name}-lambda-pre-token-${var.environment}"
-}
+# # ---- Cognito ----
+# data "aws_lambda_function" "pre_token" {
+#   function_name = "${var.app_name}-lambda-pre-token-${var.environment}"
+# }
 
-data "aws_lambda_function" "post_confirmation" {
-  function_name = "${var.app_name}-lambda-user-post-confirmation-${var.environment}"
-}
+# data "aws_lambda_function" "post_confirmation" {
+#   function_name = "${var.app_name}-lambda-user-post-confirmation-${var.environment}"
+# }
 
 module "cognito" {
   source          = "git::ssh://git@github.com/sass-ecommerce/ctv-infraestructura-terraform-modules-01.git//modules/cognito?ref=main"
@@ -68,9 +68,9 @@ module "cognito" {
   app_client_name = "${var.app_name}-app-client-${var.environment}"
   tags            = local.common_tags
 
-  pre_token_generation_lambda_arn = data.aws_lambda_function.pre_token.arn
-  post_confirmation_lambda_arn    = data.aws_lambda_function.post_confirmation.arn
-}
+#   pre_token_generation_lambda_arn = data.aws_lambda_function.pre_token.arn
+#   post_confirmation_lambda_arn    = data.aws_lambda_function.post_confirmation.arn
+# }
 
 module "secrets" {
   source      = "git::ssh://git@github.com/sass-ecommerce/ctv-infraestructura-terraform-modules-01.git//modules/secrets?ref=main"
@@ -78,10 +78,10 @@ module "secrets" {
   app_name    = var.app_name
   tags        = local.common_tags
 
-  string_parameters = {
-    "iam/lambda-role-arn"   = module.iam_lambda.role_arn
-    "cognito/user-pool-id"  = module.cognito.user_pool_id
-    "cognito/app-client-id" = module.cognito.client_id
-  }
-}
+#   string_parameters = {
+#     "iam/lambda-role-arn"   = module.iam_lambda.role_arn
+#     "cognito/user-pool-id"  = module.cognito.user_pool_id
+#     "cognito/app-client-id" = module.cognito.client_id
+#   }
+# }
 
