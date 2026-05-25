@@ -67,9 +67,19 @@ jobs:
         run: |
           BRANCH="${{ github.base_ref }}"
           ENV=$([[ "$BRANCH" == "main" ]] && echo "prod" || echo "dev")
+          MODULE_REF=$([[ "$ENV" == "prod" ]] && echo "main" || echo "develop")
           echo "environment=$ENV"                          >> $GITHUB_OUTPUT
           echo "bucket=ctv-terraform-state-${ENV}"        >> $GITHUB_OUTPUT
           echo "key=${ENV}/terraform.tfstate"              >> $GITHUB_OUTPUT
+          echo "module_ref=$MODULE_REF"                    >> $GITHUB_OUTPUT
+
+      - name: Set module branch
+        run: |
+          MODULE_REF="${{ steps.resolve.outputs.module_ref }}"
+          echo "🔀 Apuntando módulos a rama: $MODULE_REF"
+          sed -i 's|"sass-ecommerce/\([^/]*\)/\(.*\)"|"git::ssh://git@github.com/sass-ecommerce/\1.git//\2?ref='"$MODULE_REF"'"|g' main.tf
+          echo "📦 Sources resueltos:"
+          grep "source" main.tf
 
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
@@ -150,9 +160,19 @@ jobs:
         run: |
           BRANCH="${{ github.ref_name }}"
           ENV=$([[ "$BRANCH" == "main" ]] && echo "prod" || echo "dev")
+          MODULE_REF=$([[ "$ENV" == "prod" ]] && echo "main" || echo "develop")
           echo "environment=$ENV"                          >> $GITHUB_OUTPUT
           echo "bucket=ctv-terraform-state-${ENV}"        >> $GITHUB_OUTPUT
           echo "key=${ENV}/terraform.tfstate"              >> $GITHUB_OUTPUT
+          echo "module_ref=$MODULE_REF"                    >> $GITHUB_OUTPUT
+
+      - name: Set module branch
+        run: |
+          MODULE_REF="${{ steps.resolve.outputs.module_ref }}"
+          echo "🔀 Apuntando módulos a rama: $MODULE_REF"
+          sed -i 's|"sass-ecommerce/\([^/]*\)/\(.*\)"|"git::ssh://git@github.com/sass-ecommerce/\1.git//\2?ref='"$MODULE_REF"'"|g' main.tf
+          echo "📦 Sources resueltos:"
+          grep "source" main.tf
 
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4

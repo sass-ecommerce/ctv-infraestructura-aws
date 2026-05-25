@@ -8,7 +8,7 @@ locals {
 
 # ---- IAM (Lambda execution role) ----
 module "iam_lambda" {
-  source              = "git::ssh://git@github.com/sass-ecommerce/ctv-infraestructura-terraform-modules-01.git//modules/iam?ref=main"
+  source              = "sass-ecommerce/ctv-infraestructura-terraform-modules-01/modules/iam"
   role_name           = "${var.project}-lambda-role-${var.environment}"
   assume_role_service = "lambda.amazonaws.com"
   policy_name         = "${var.project}-lambda-policy-${var.environment}"
@@ -46,7 +46,7 @@ module "iam_lambda" {
 
 # ---- DynamoDB ----
 module "dynamodb_users" {
-  source     = "git::ssh://git@github.com/sass-ecommerce/ctv-infraestructura-terraform-modules-01.git//modules/dynamodb?ref=main"
+  source     = "sass-ecommerce/ctv-infraestructura-terraform-modules-01/modules/dynamodb"
   table_name = "${var.project}-tbl-users-${var.environment}"
   hash_key   = "id"
   range_key  = "sub"
@@ -63,7 +63,7 @@ data "aws_lambda_function" "post_confirmation" {
 }
 
 module "cognito" {
-  source          = "git::ssh://git@github.com/sass-ecommerce/ctv-infraestructura-terraform-modules-01.git//modules/cognito?ref=main"
+  source          = "sass-ecommerce/ctv-infraestructura-terraform-modules-01/modules/cognito"
   name            = "${var.project}-user-pool-${var.environment}"
   app_client_name = "${var.project}-app-client-${var.environment}"
   tags            = local.common_tags
@@ -73,7 +73,7 @@ module "cognito" {
 }
 
 module "secrets" {
-  source      = "git::ssh://git@github.com/sass-ecommerce/ctv-infraestructura-terraform-modules-01.git//modules/secrets?ref=main"
+  source      = "sass-ecommerce/ctv-infraestructura-terraform-modules-01/modules/secrets"
   environment = var.environment
   app_name    = var.project
   tags        = local.common_tags
