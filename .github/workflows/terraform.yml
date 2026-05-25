@@ -62,6 +62,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Configure git auth
+        run: git config --global url."https://oauth2:${{ secrets.TF_MODULES_TOKEN }}@github.com/".insteadOf "https://github.com/"
+
       - name: Resolve environment
         id: resolve
         run: |
@@ -77,7 +80,7 @@ jobs:
         run: |
           MODULE_REF="${{ steps.resolve.outputs.module_ref }}"
           echo "🔀 Apuntando módulos a rama: $MODULE_REF"
-          sed -i 's|"sass-ecommerce/\([^/]*\)/\(.*\)"|"git::ssh://git@github.com/sass-ecommerce/\1.git//\2?ref='"$MODULE_REF"'"|g' main.tf
+          sed -i "s|\"sass-ecommerce/\([^/]*\)/\(.*\)\"|\"git::https://github.com/sass-ecommerce/\1.git//\2?ref=${MODULE_REF}\"|g" main.tf
           echo "📦 Sources resueltos:"
           grep "source" main.tf
 
@@ -155,6 +158,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Configure git auth
+        run: git config --global url."https://oauth2:${{ secrets.TF_MODULES_TOKEN }}@github.com/".insteadOf "https://github.com/"
+
       - name: Resolve environment
         id: resolve
         run: |
@@ -170,7 +176,7 @@ jobs:
         run: |
           MODULE_REF="${{ steps.resolve.outputs.module_ref }}"
           echo "🔀 Apuntando módulos a rama: $MODULE_REF"
-          sed -i 's|"sass-ecommerce/\([^/]*\)/\(.*\)"|"git::ssh://git@github.com/sass-ecommerce/\1.git//\2?ref='"$MODULE_REF"'"|g' main.tf
+          sed -i "s|\"sass-ecommerce/\([^/]*\)/\(.*\)\"|\"git::https://github.com/sass-ecommerce/\1.git//\2?ref=${MODULE_REF}\"|g" main.tf
           echo "📦 Sources resueltos:"
           grep "source" main.tf
 
