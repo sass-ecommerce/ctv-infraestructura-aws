@@ -14,3 +14,13 @@ variable "app_name" {
   description = "Application name used as prefix for resource names"
   default     = "ctv"
 }
+
+variable "project" {
+  type        = string
+  description = "Short project identifier"
+}
+
+variable "project_name" {
+  type        = string
+  description = "Full project name"
+}

@@ -1,0 +1,178 @@
+name: Terraform
+
+on:
+  push:
+    branches:
+      - develop
+      - main
+    paths:
+      - "infra/**"
+  pull_request:
+    branches:
+      - develop
+      - main
+    paths:
+      - "infra/**"
+
+permissions:
+  id-token: write
+  contents: read
+  pull-requests: write
+
+env:
+  TF_VERSION: "1.10.0"
+  AWS_REGION: "us-east-1"
+  WORKING_DIR: "./infra"
+
+jobs:
+  validate:
+    name: Validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Versión de Terraform
+        run: |
+          echo "📦 Terraform version: $(terraform version -json | jq -r '.terraform_version')"
+          echo "📂 Directorio de trabajo: ${{ env.WORKING_DIR }}"
+
+      - name: Format check
+        run: |
+          echo "🔍 Verificando formato del código..."
+          terraform fmt -check -recursive
+          echo "✅ Formato correcto"
+        working-directory: ${{ env.WORKING_DIR }}
+
+  terraform-plan:
+    name: Terraform Plan
+    runs-on: ubuntu-latest
+    needs: validate
+    if: github.event_name == 'pull_request'
+
+    defaults:
+      run:
+        working-directory: ${{ env.WORKING_DIR }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Resolve environment
+        id: resolve
+        run: |
+          BRANCH="${{ github.base_ref }}"
+          ENV=$([[ "$BRANCH" == "main" ]] && echo "prod" || echo "dev")
+          echo "environment=$ENV"                          >> $GITHUB_OUTPUT
+          echo "bucket=ctv-terraform-state-${ENV}"        >> $GITHUB_OUTPUT
+          echo "key=${ENV}/terraform.tfstate"              >> $GITHUB_OUTPUT
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ github.base_ref == 'main' && secrets.AWS_ROLE_ARN_PROD || secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Terraform Init
+        run: |
+          terraform init \
+            -backend-config="bucket=${{ steps.resolve.outputs.bucket }}" \
+            -backend-config="key=${{ steps.resolve.outputs.key }}"
+
+      - name: Terraform Validate
+        run: terraform validate
+
+      - name: Terraform Plan
+        id: plan
+        run: terraform plan -var="environment=${{ steps.resolve.outputs.environment }}" -no-color 2>&1 | tee plan_output.txt
+        continue-on-error: true
+
+      - name: Comment Plan on PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const planOutput = fs.readFileSync('${{ env.WORKING_DIR }}/plan_output.txt', 'utf8');
+            const status = '${{ steps.plan.outcome }}';
+            const statusIcon = status === 'success' ? '✅' : '❌';
+            const env = '${{ steps.resolve.outputs.environment }}';
+
+            const body = `### ${statusIcon} Terraform Plan — \`${env}\`
+
+            <details><summary>Ver plan completo</summary>
+
+            \`\`\`hcl
+            ${planOutput}
+            \`\`\`
+
+            </details>
+
+            **Estado:** \`${status}\`
+            **Rama:** \`${{ github.head_ref }}\`
+            **Commit:** \`${{ github.sha }}\``;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });
+
+      - name: Fail if plan failed
+        if: steps.plan.outcome == 'failure'
+        run: exit 1
+
+  terraform-apply:
+    name: Terraform Apply
+    runs-on: ubuntu-latest
+    needs: validate
+    if: github.event_name == 'push'
+
+    defaults:
+      run:
+        working-directory: ${{ env.WORKING_DIR }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Resolve environment
+        id: resolve
+        run: |
+          BRANCH="${{ github.ref_name }}"
+          ENV=$([[ "$BRANCH" == "main" ]] && echo "prod" || echo "dev")
+          echo "environment=$ENV"                          >> $GITHUB_OUTPUT
+          echo "bucket=ctv-terraform-state-${ENV}"        >> $GITHUB_OUTPUT
+          echo "key=${ENV}/terraform.tfstate"              >> $GITHUB_OUTPUT
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ github.ref_name == 'main' && secrets.AWS_ROLE_ARN_PROD || secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Terraform Init
+        run: |
+          terraform init \
+            -backend-config="bucket=${{ steps.resolve.outputs.bucket }}" \
+            -backend-config="key=${{ steps.resolve.outputs.key }}"
+
+      - name: Terraform Plan
+        run: terraform plan -var="environment=${{ steps.resolve.outputs.environment }}" -no-color -out=tfplan
+
+      - name: Terraform Apply
+        run: terraform apply -auto-approve tfplan
