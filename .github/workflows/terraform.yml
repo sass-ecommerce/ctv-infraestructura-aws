@@ -13,6 +13,15 @@ on:
       - main
     paths:
       - "infra/**"
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Ambiente a desplegar"
+        required: true
+        type: choice
+        options:
+          - dev
+          - prod
 
 permissions:
   id-token: write
@@ -198,6 +207,65 @@ jobs:
             -backend-config="key=${{ steps.resolve.outputs.key }}"
 
       - name: Terraform Plan
+        run: terraform plan -var="environment=${{ steps.resolve.outputs.environment }}" -no-color -out=tfplan
+
+      - name: Terraform Apply
+        run: terraform apply -auto-approve tfplan
+
+  terraform-deploy:
+    name: Terraform Deploy (on-demand)
+    runs-on: ubuntu-latest
+    needs: validate
+    if: github.event_name == 'workflow_dispatch'
+
+    defaults:
+      run:
+        working-directory: ${{ env.WORKING_DIR }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure git auth
+        run: git config --global url."https://oauth2:${{ secrets.TF_MODULES_TOKEN }}@github.com/".insteadOf "https://github.com/"
+
+      - name: Resolve environment
+        id: resolve
+        run: |
+          ENV="${{ github.event.inputs.environment }}"
+          MODULE_REF=$([[ "$ENV" == "prod" ]] && echo "main" || echo "develop")
+          echo "environment=$ENV"                          >> $GITHUB_OUTPUT
+          echo "bucket=ctv-terraform-state-${ENV}"        >> $GITHUB_OUTPUT
+          echo "key=${ENV}/terraform.tfstate"              >> $GITHUB_OUTPUT
+          echo "module_ref=$MODULE_REF"                    >> $GITHUB_OUTPUT
+
+      - name: Set module branch
+        run: |
+          MODULE_REF="${{ steps.resolve.outputs.module_ref }}"
+          echo "🔀 Apuntando módulos a rama: $MODULE_REF"
+          sed -i "s|\"sass-ecommerce/\([^/]*\)/\(.*\)\"|\"git::https://github.com/sass-ecommerce/\1.git//\2?ref=${MODULE_REF}\"|g" main.tf
+          echo "📦 Sources resueltos:"
+          grep "source" main.tf
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ github.event.inputs.environment == 'prod' && secrets.AWS_ROLE_ARN_PROD || secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Terraform Init
+        run: |
+          terraform init \
+            -backend-config="bucket=${{ steps.resolve.outputs.bucket }}" \
+            -backend-config="key=${{ steps.resolve.outputs.key }}"
+
+      - name: Terraform Plan
+        id: plan
         run: terraform plan -var="environment=${{ steps.resolve.outputs.environment }}" -no-color -out=tfplan
 
       - name: Terraform Apply
