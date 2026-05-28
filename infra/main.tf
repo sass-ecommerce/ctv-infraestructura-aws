@@ -38,6 +38,11 @@ module "iam_lambda" {
         Effect   = "Allow"
         Action   = ["s3:GetObject", "s3:PutObject"]
         Resource = "arn:aws:s3:::${var.project}-*-${var.environment}/*"
+      },
+      {
+        Effect   = "Allow"
+        Action   = ["kms:Decrypt", "kms:GenerateDataKey"]
+        Resource = "*"
       }
     ]
   })
