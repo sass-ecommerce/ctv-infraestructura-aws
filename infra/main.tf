@@ -6,6 +6,15 @@ locals {
   }
 }
 
+# ---- S3 ----
+module "s3_products" {
+  source            = "sass-ecommerce/ctv-infraestructura-terraform-modules-01/modules/s3"
+  bucket_name       = "${var.project}-bucket-products-${var.environment}-01"
+  environment       = var.environment
+  enable_versioning = false
+  tags              = local.common_tags
+}
+
 # ---- IAM (Lambda execution role) ----
 module "iam_lambda" {
   source              = "sass-ecommerce/ctv-infraestructura-terraform-modules-01/modules/iam"
@@ -82,6 +91,7 @@ module "secrets" {
     "iam/lambda-role-arn"   = module.iam_lambda.role_arn
     "cognito/user-pool-id"  = module.cognito.user_pool_id
     "cognito/app-client-id" = module.cognito.client_id
+    "s3/products-bucket"     = module.s3_products.bucket_name
   }
 }
 
