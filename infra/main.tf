@@ -13,13 +13,6 @@ module "s3_products" {
   environment       = var.environment
   enable_versioning = false
   tags              = local.common_tags
-
-  lambda_notifications = [
-    {
-      lambda_function_arn = data.aws_lambda_function.products_upload.arn
-      events              = ["s3:ObjectCreated:Put"]
-    }
-  ]
 }
 
 # ---- IAM (Lambda execution role) ----
