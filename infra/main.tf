@@ -13,6 +13,13 @@ module "s3_products" {
   environment       = var.environment
   enable_versioning = false
   tags              = local.common_tags
+
+  lambda_notifications = [
+    {
+      lambda_function_arn = module.products_upload.function_arn
+      events              = ["s3:ObjectCreated:Put"]
+    }
+  ]
 }
 
 # ---- IAM (Lambda execution role) ----
@@ -63,14 +70,6 @@ module "dynamodb_users" {
 }
 
 # ---- Cognito ----
-data "aws_lambda_function" "pre_token" {
-  function_name = "${var.project}-lambda-pre-token-${var.environment}-01"
-}
-
-data "aws_lambda_function" "post_confirmation" {
-  function_name = "${var.project}-lambda-user-post-confirmation-${var.environment}-01"
-}
-
 module "cognito" {
   source          = "sass-ecommerce/ctv-infraestructura-terraform-modules-01/modules/cognito"
   name            = "${var.project}-user-pool-${var.environment}"
