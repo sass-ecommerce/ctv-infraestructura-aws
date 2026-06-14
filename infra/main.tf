@@ -16,7 +16,7 @@ module "s3_products" {
 
   lambda_notifications = [
     {
-      lambda_function_arn = module.products_upload.function_arn
+      lambda_function_arn = data.aws_lambda_function.products_upload.arn
       events              = ["s3:ObjectCreated:Put"]
     }
   ]
