@@ -68,9 +68,6 @@ module "cognito" {
   name            = "${var.project}-user-pool-${var.environment}"
   app_client_name = "${var.project}-app-client-${var.environment}"
   tags            = local.common_tags
-
-  pre_token_generation_lambda_arn = data.aws_lambda_function.pre_token.arn
-  post_confirmation_lambda_arn    = data.aws_lambda_function.post_confirmation.arn
 }
 
 # ---- EventBridge ----
