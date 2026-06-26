@@ -73,6 +73,24 @@ module "cognito" {
   post_confirmation_lambda_arn    = data.aws_lambda_function.post_confirmation.arn
 }
 
+# ---- EventBridge ----
+resource "aws_cloudwatch_event_bus" "main" {
+  name = "${var.project}-event-bus-${var.environment}"
+  tags = local.common_tags
+}
+
+resource "aws_cloudwatch_event_rule" "products" {
+  name           = "${var.project}-rule-products-${var.environment}"
+  event_bus_name = aws_cloudwatch_event_bus.main.name
+  state          = "ENABLED"
+
+  event_pattern = jsonencode({
+    source = ["${var.project}.products"]
+  })
+
+  tags = local.common_tags
+}
+
 module "secrets" {
   source      = "sass-ecommerce/ctv-infraestructura-terraform-modules-01/modules/secrets"
   environment = var.environment
@@ -80,10 +98,12 @@ module "secrets" {
   tags        = local.common_tags
 
   string_parameters = {
-    "iam/lambda-role-arn"    = module.iam_lambda.role_arn
-    "cognito/user-pool-id"   = module.cognito.user_pool_id
-    "cognito/app-client-id"  = module.cognito.client_id
-    "s3/products-bucket-arn" = module.s3_products.bucket_arn
+    "iam/lambda-role-arn"       = module.iam_lambda.role_arn
+    "cognito/user-pool-id"      = module.cognito.user_pool_id
+    "cognito/app-client-id"     = module.cognito.client_id
+    "s3/products-bucket-arn"    = module.s3_products.bucket_arn
+    "eventbridge/event-bus"     = aws_cloudwatch_event_bus.main.name
+    "eventbridge/rule-products" = aws_cloudwatch_event_rule.products.name
   }
 }
 
