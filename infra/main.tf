@@ -62,13 +62,13 @@ module "dynamodb_users" {
   tags       = local.common_tags
 }
 
-# module "dynamodb_products" {
-#   source     = "sass-ecommerce/ctv-infraestructura-terraform-modules-01/modules/dynamodb"
-#   table_name = "${var.project}-tbl-products-${var.environment}"
-#   hash_key   = "tenantId"
-#   range_key  = "productId"
-#   tags       = local.common_tags
-# }
+module "dynamodb_products" {
+  source     = "sass-ecommerce/ctv-infraestructura-terraform-modules-01/modules/dynamodb"
+  table_name = "${var.project}-tbl-products-${var.environment}"
+  hash_key   = "tenantId"
+  range_key  = "productId"
+  tags       = local.common_tags
+}
 
 # ---- Cognito ----
 module "cognito" {
