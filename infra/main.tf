@@ -78,6 +78,12 @@ module "cognito" {
   tags            = local.common_tags
 }
 
+# Hosted UI (classic) domain, used for federated login (e.g. Google) via OAuth2 authorize/token endpoints.
+resource "aws_cognito_user_pool_domain" "this" {
+  domain       = "${var.project}-${var.environment}"
+  user_pool_id = module.cognito.user_pool_id
+}
+
 # ---- EventBridge ----
 resource "aws_cloudwatch_event_bus" "main" {
   name = "${var.project}-event-bus-${var.environment}"
@@ -106,6 +112,7 @@ module "secrets" {
     "iam/lambda-role-arn"           = module.iam_lambda.role_arn
     "cognito/user-pool-id"          = module.cognito.user_pool_id
     "cognito/app-client-id"         = module.cognito.client_id
+    "cognito/domain"                = aws_cognito_user_pool_domain.this.domain
     "s3/products-bucket-arn"        = module.s3_products.bucket_arn
     "eventbridge/event-bus-arn"     = aws_cloudwatch_event_bus.main.arn
     "eventbridge/rule-products-arn" = aws_cloudwatch_event_rule.products.arn
