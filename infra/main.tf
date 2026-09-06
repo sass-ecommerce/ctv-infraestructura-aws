@@ -84,6 +84,25 @@ resource "aws_cognito_user_pool_domain" "this" {
   user_pool_id = module.cognito.user_pool_id
 }
 
+resource "aws_cognito_identity_provider" "google" {
+  user_pool_id  = module.cognito.user_pool_id
+  provider_name = "Google"
+  provider_type = "Google"
+
+  provider_details = {
+    client_id        = var.google_client_id
+    client_secret    = var.google_client_secret
+    authorize_scopes = "openid email profile"
+  }
+
+  attribute_mapping = {
+    email       = "email"
+    given_name  = "given_name"
+    family_name = "family_name"
+    username    = "sub"
+  }
+}
+
 # ---- EventBridge ----
 resource "aws_cloudwatch_event_bus" "main" {
   name = "${var.project}-event-bus-${var.environment}"
