@@ -72,10 +72,12 @@ module "dynamodb_products" {
 
 # ---- Cognito ----
 module "cognito" {
-  source          = "sass-ecommerce/ctv-infraestructura-terraform-modules-01/modules/cognito"
-  name            = "${var.project}-user-pool-${var.environment}"
-  app_client_name = "${var.project}-app-client-${var.environment}"
-  tags            = local.common_tags
+  source                   = "../modules/cognito"
+  name                     = "${var.project}-user-pool-${var.environment}"
+  app_client_name          = "${var.project}-app-client-${var.environment}"
+  oauth_callback_urls      = ["app-chapa-tu-venta://"]
+  oauth_identity_providers = ["COGNITO", "Google"]
+  tags                     = local.common_tags
 }
 
 # Hosted UI (classic) domain, used for federated login (e.g. Google) via OAuth2 authorize/token endpoints.
@@ -103,34 +105,12 @@ resource "aws_cognito_identity_provider" "google" {
   }
 }
 
-# Dedicated app client for the Hosted UI / OAuth (Google) flow, kept separate
-# from module.cognito's password-auth client so neither config affects the other.
-resource "aws_cognito_user_pool_client" "google_oauth" {
-  name         = "${var.project}-app-client-google-${var.environment}"
-  user_pool_id = module.cognito.user_pool_id
-
-  generate_secret = false
-
-  explicit_auth_flows = [
-    "ALLOW_REFRESH_TOKEN_AUTH",
-  ]
-
-  allowed_oauth_flows_user_pool_client = true
-  allowed_oauth_flows                  = ["code"]
-  allowed_oauth_scopes                 = ["openid", "email", "profile"]
-  callback_urls                        = ["app-chapa-tu-venta://"]
-  supported_identity_providers         = [aws_cognito_identity_provider.google.provider_name]
-
-  token_validity_units {
-    access_token  = "hours"
-    id_token      = "hours"
-    refresh_token = "days"
-  }
-
-  access_token_validity  = 1
-  id_token_validity      = 1
-  refresh_token_validity = 30
-}
+# NOTE: module.cognito's app client references the "Google" identity provider by
+# literal name (via oauth_identity_providers), not by resource attribute, to avoid
+# a dependency cycle (the identity provider itself depends on module.cognito's
+# user_pool_id output). This is safe today because the Google identity provider
+# already exists; a from-scratch environment recreation would need it applied first
+# (e.g. via `terraform apply -target=aws_cognito_identity_provider.google` once).
 
 # ---- EventBridge ----
 resource "aws_cloudwatch_event_bus" "main" {
@@ -160,7 +140,6 @@ module "secrets" {
     "iam/lambda-role-arn"           = module.iam_lambda.role_arn
     "cognito/user-pool-id"          = module.cognito.user_pool_id
     "cognito/app-client-id"         = module.cognito.client_id
-    "cognito/app-client-id-google"  = aws_cognito_user_pool_client.google_oauth.id
     "cognito/domain"                = aws_cognito_user_pool_domain.this.domain
     "s3/products-bucket-arn"        = module.s3_products.bucket_arn
     "eventbridge/event-bus-arn"     = aws_cloudwatch_event_bus.main.arn
