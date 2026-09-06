@@ -103,6 +103,35 @@ resource "aws_cognito_identity_provider" "google" {
   }
 }
 
+# Dedicated app client for the Hosted UI / OAuth (Google) flow, kept separate
+# from module.cognito's password-auth client so neither config affects the other.
+resource "aws_cognito_user_pool_client" "google_oauth" {
+  name         = "${var.project}-app-client-google-${var.environment}"
+  user_pool_id = module.cognito.user_pool_id
+
+  generate_secret = false
+
+  explicit_auth_flows = [
+    "ALLOW_REFRESH_TOKEN_AUTH",
+  ]
+
+  allowed_oauth_flows_user_pool_client = true
+  allowed_oauth_flows                  = ["code"]
+  allowed_oauth_scopes                 = ["openid", "email", "profile"]
+  callback_urls                        = ["app-chapa-tu-venta://"]
+  supported_identity_providers         = [aws_cognito_identity_provider.google.provider_name]
+
+  token_validity_units {
+    access_token  = "hours"
+    id_token      = "hours"
+    refresh_token = "days"
+  }
+
+  access_token_validity  = 1
+  id_token_validity      = 1
+  refresh_token_validity = 30
+}
+
 # ---- EventBridge ----
 resource "aws_cloudwatch_event_bus" "main" {
   name = "${var.project}-event-bus-${var.environment}"
@@ -131,6 +160,7 @@ module "secrets" {
     "iam/lambda-role-arn"           = module.iam_lambda.role_arn
     "cognito/user-pool-id"          = module.cognito.user_pool_id
     "cognito/app-client-id"         = module.cognito.client_id
+    "cognito/app-client-id-google"  = aws_cognito_user_pool_client.google_oauth.id
     "cognito/domain"                = aws_cognito_user_pool_domain.this.domain
     "s3/products-bucket-arn"        = module.s3_products.bucket_arn
     "eventbridge/event-bus-arn"     = aws_cloudwatch_event_bus.main.arn
