@@ -82,7 +82,7 @@ resource "aws_cognito_user_pool_client" "this" {
   # OAuth / Hosted UI (e.g. federated Google sign-in). Disabled unless callback URLs are provided.
   allowed_oauth_flows_user_pool_client = length(var.oauth_callback_urls) > 0
   allowed_oauth_flows                  = length(var.oauth_callback_urls) > 0 ? ["code"] : null
-  allowed_oauth_scopes                 = length(var.oauth_callback_urls) > 0 ? ["openid", "email", "profile"] : null
+  allowed_oauth_scopes                 = length(var.oauth_callback_urls) > 0 ? ["openid", "email", "profile", "aws.cognito.signin.user.admin"] : null
   callback_urls                        = length(var.oauth_callback_urls) > 0 ? var.oauth_callback_urls : null
   supported_identity_providers         = var.oauth_identity_providers
 }
