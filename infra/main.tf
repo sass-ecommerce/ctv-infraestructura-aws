@@ -47,6 +47,17 @@ module "iam_lambda" {
         Effect   = "Allow"
         Action   = ["s3:GetObject", "s3:PutObject"]
         Resource = "arn:aws:s3:::${var.project}-*-${var.environment}/*"
+      },
+      {
+        Effect = "Allow"
+        # Used by the Pre Sign-up trigger to link a new Google identity to an
+        # existing native (email/password) user with the same email, instead of
+        # letting Cognito create a second, disconnected user for that email.
+        Action = [
+          "cognito-idp:ListUsers",
+          "cognito-idp:AdminLinkProviderForUser"
+        ]
+        Resource = module.cognito.user_pool_arn
       }
     ]
   })
