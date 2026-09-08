@@ -8,7 +8,7 @@ locals {
 
 # ---- S3 ----
 module "s3_products" {
-  source            = "sass-ecommerce/ctv-infraestructura-terraform-modules-01/modules/s3"
+  source            = "../modules/s3"
   bucket_name       = "${var.project}-bucket-products-${var.environment}-01"
   environment       = var.environment
   enable_versioning = false
@@ -17,7 +17,7 @@ module "s3_products" {
 
 # ---- IAM (Lambda execution role) ----
 module "iam_lambda" {
-  source              = "sass-ecommerce/ctv-infraestructura-terraform-modules-01/modules/iam"
+  source              = "../modules/iam"
   role_name           = "${var.project}-lambda-role-${var.environment}"
   assume_role_service = "lambda.amazonaws.com"
   policy_name         = "${var.project}-lambda-policy-${var.environment}"
@@ -66,7 +66,7 @@ module "iam_lambda" {
 
 # ---- DynamoDB ----
 module "dynamodb_users" {
-  source     = "sass-ecommerce/ctv-infraestructura-terraform-modules-01/modules/dynamodb"
+  source     = "../modules/dynamodb"
   table_name = "${var.project}-tbl-users-${var.environment}"
   hash_key   = "id"
   range_key  = "sub"
@@ -74,7 +74,7 @@ module "dynamodb_users" {
 }
 
 module "dynamodb_products" {
-  source     = "sass-ecommerce/ctv-infraestructura-terraform-modules-01/modules/dynamodb"
+  source     = "../modules/dynamodb"
   table_name = "${var.project}-tbl-products-${var.environment}"
   hash_key   = "tenantId"
   range_key  = "productId"
@@ -142,7 +142,7 @@ resource "aws_cloudwatch_event_rule" "products" {
 }
 
 module "secrets" {
-  source      = "sass-ecommerce/ctv-infraestructura-terraform-modules-01/modules/secrets"
+  source      = "../modules/secrets"
   environment = var.environment
   app_name    = var.project
   tags        = local.common_tags
