@@ -84,5 +84,6 @@ resource "aws_cognito_user_pool_client" "this" {
   allowed_oauth_flows                  = length(var.oauth_callback_urls) > 0 ? ["code"] : null
   allowed_oauth_scopes                 = length(var.oauth_callback_urls) > 0 ? ["openid", "email", "profile", "aws.cognito.signin.user.admin"] : null
   callback_urls                        = length(var.oauth_callback_urls) > 0 ? var.oauth_callback_urls : null
+  logout_urls                          = length(var.oauth_logout_urls) > 0 ? var.oauth_logout_urls : null
   supported_identity_providers         = var.oauth_identity_providers
 }

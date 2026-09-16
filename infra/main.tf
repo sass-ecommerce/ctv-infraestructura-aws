@@ -87,6 +87,7 @@ module "cognito" {
   name                     = "${var.project}-user-pool-${var.environment}"
   app_client_name          = "${var.project}-app-client-${var.environment}"
   oauth_callback_urls      = ["app-chapa-tu-venta://"]
+  oauth_logout_urls        = ["app-chapa-tu-venta://"]
   oauth_identity_providers = ["COGNITO", "Google"]
   tags                     = local.common_tags
 }
