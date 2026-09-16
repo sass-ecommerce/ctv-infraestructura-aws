@@ -55,6 +55,13 @@ resource "aws_cognito_user_pool" "this" {
   }
 
   tags = var.tags
+
+  # lambda_config (pre-token-generation, post-confirmation triggers) is managed
+  # out-of-band by a separate repo. Ignore it here so applies from this repo
+  # never overwrite/clear those triggers.
+  lifecycle {
+    ignore_changes = [lambda_config]
+  }
 }
 
 resource "aws_cognito_user_pool_client" "this" {
