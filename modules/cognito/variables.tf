@@ -25,6 +25,12 @@ variable "oauth_callback_urls" {
   default     = []
 }
 
+variable "oauth_logout_urls" {
+  type        = list(string)
+  description = "Allowed OAuth sign-out URLs for the Hosted UI. Required to clear the Hosted UI session cookie via the /logout endpoint."
+  default     = []
+}
+
 variable "oauth_identity_providers" {
   type        = list(string)
   description = "Identity providers allowed for the OAuth (Hosted UI) flow."
