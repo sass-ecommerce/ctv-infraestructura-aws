@@ -81,6 +81,14 @@ module "dynamodb_products" {
   tags       = local.common_tags
 }
 
+module "dynamodb_collections" {
+  source     = "../modules/dynamodb"
+  table_name = "${var.project}-tbl-collections-${var.environment}"
+  hash_key   = "tenantId"
+  range_key  = "collectionId"
+  tags       = local.common_tags
+}
+
 # ---- Cognito ----
 module "cognito" {
   source                   = "../modules/cognito"
@@ -142,6 +150,18 @@ resource "aws_cloudwatch_event_rule" "products" {
   tags = local.common_tags
 }
 
+resource "aws_cloudwatch_event_rule" "collections" {
+  name           = "${var.project}-rule-collections-${var.environment}"
+  event_bus_name = aws_cloudwatch_event_bus.main.name
+  state          = "ENABLED"
+
+  event_pattern = jsonencode({
+    source = ["${var.project}.collections"]
+  })
+
+  tags = local.common_tags
+}
+
 module "secrets" {
   source      = "../modules/secrets"
   environment = var.environment
@@ -149,13 +169,14 @@ module "secrets" {
   tags        = local.common_tags
 
   string_parameters = {
-    "iam/lambda-role-arn"           = module.iam_lambda.role_arn
-    "cognito/user-pool-id"          = module.cognito.user_pool_id
-    "cognito/app-client-id"         = module.cognito.client_id
-    "cognito/domain"                = aws_cognito_user_pool_domain.this.domain
-    "s3/products-bucket-arn"        = module.s3_products.bucket_arn
-    "eventbridge/event-bus-arn"     = aws_cloudwatch_event_bus.main.arn
-    "eventbridge/rule-products-arn" = aws_cloudwatch_event_rule.products.arn
+    "iam/lambda-role-arn"              = module.iam_lambda.role_arn
+    "cognito/user-pool-id"             = module.cognito.user_pool_id
+    "cognito/app-client-id"            = module.cognito.client_id
+    "cognito/domain"                   = aws_cognito_user_pool_domain.this.domain
+    "s3/products-bucket-arn"           = module.s3_products.bucket_arn
+    "eventbridge/event-bus-arn"        = aws_cloudwatch_event_bus.main.arn
+    "eventbridge/rule-products-arn"    = aws_cloudwatch_event_rule.products.arn
+    "eventbridge/rule-collections-arn" = aws_cloudwatch_event_rule.collections.arn
   }
 }
 
