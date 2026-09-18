@@ -15,6 +15,37 @@ module "s3_products" {
   tags              = local.common_tags
 }
 
+# ---- CloudFront (CDN for product images, private bucket via OAC) ----
+module "cloudfront_products" {
+  source                      = "../modules/cloudfront"
+  bucket_name                 = module.s3_products.bucket_name
+  bucket_regional_domain_name = module.s3_products.bucket_regional_domain_name
+  price_class                 = "PriceClass_100"
+  comment                     = "${var.project}-cdn-products-${var.environment}"
+  tags                        = local.common_tags
+}
+
+resource "aws_s3_bucket_policy" "products_cloudfront" {
+  bucket = module.s3_products.bucket_id
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid       = "AllowCloudFrontServicePrincipalReadOnly"
+        Effect    = "Allow"
+        Principal = { Service = "cloudfront.amazonaws.com" }
+        Action    = "s3:GetObject"
+        Resource  = "${module.s3_products.bucket_arn}/*"
+        Condition = {
+          StringEquals = {
+            "AWS:SourceArn" = module.cloudfront_products.distribution_arn
+          }
+        }
+      }
+    ]
+  })
+}
+
 # ---- IAM (Lambda execution role) ----
 module "iam_lambda" {
   source              = "../modules/iam"
@@ -174,6 +205,8 @@ module "secrets" {
     "cognito/app-client-id"            = module.cognito.client_id
     "cognito/domain"                   = aws_cognito_user_pool_domain.this.domain
     "s3/products-bucket-arn"           = module.s3_products.bucket_arn
+    "cdn/products-domain-name"         = module.cloudfront_products.distribution_domain_name
+    "cdn/products-distribution-id"     = module.cloudfront_products.distribution_id
     "eventbridge/event-bus-arn"        = aws_cloudwatch_event_bus.main.arn
     "eventbridge/rule-products-arn"    = aws_cloudwatch_event_rule.products.arn
     "eventbridge/rule-collections-arn" = aws_cloudwatch_event_rule.collections.arn
