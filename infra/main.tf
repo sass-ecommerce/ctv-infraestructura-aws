@@ -120,6 +120,14 @@ module "dynamodb_collections" {
   tags       = local.common_tags
 }
 
+module "dynamodb_categories" {
+  source     = "../modules/dynamodb"
+  table_name = "${var.project}-tbl-categories-${var.environment}"
+  hash_key   = "tenantId"
+  range_key  = "categoryId"
+  tags       = local.common_tags
+}
+
 # ---- Cognito ----
 module "cognito" {
   source                   = "../modules/cognito"
@@ -193,6 +201,18 @@ resource "aws_cloudwatch_event_rule" "collections" {
   tags = local.common_tags
 }
 
+resource "aws_cloudwatch_event_rule" "categories" {
+  name           = "${var.project}-rule-categories-${var.environment}"
+  event_bus_name = aws_cloudwatch_event_bus.main.name
+  state          = "ENABLED"
+
+  event_pattern = jsonencode({
+    source = ["${var.project}.categories"]
+  })
+
+  tags = local.common_tags
+}
+
 module "secrets" {
   source      = "../modules/secrets"
   environment = var.environment
@@ -210,6 +230,7 @@ module "secrets" {
     "eventbridge/event-bus-arn"        = aws_cloudwatch_event_bus.main.arn
     "eventbridge/rule-products-arn"    = aws_cloudwatch_event_rule.products.arn
     "eventbridge/rule-collections-arn" = aws_cloudwatch_event_rule.collections.arn
+    "eventbridge/rule-categories-arn"  = aws_cloudwatch_event_rule.categories.arn
   }
 }
 
